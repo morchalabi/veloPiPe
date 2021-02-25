@@ -8,7 +8,7 @@ biotype_ = c('protein_coding')                                                  
 chrs_ = '^[1-9]+|^X|^Y|^MT'                                                                           # regular expression for extracting canonical and MT chromosomes
 cpu_ = 3                                                                                              # number of CPU cores
 
-# STEP 1: Reading in gtf file online ####
+# STEP 2: Reading in gtf file online ####
 message('Reading in gtf file online')
 
 mus_gtf = read_delim(file = inURL_, comment = '#', na = '.', delim = '\t',
@@ -17,7 +17,7 @@ mus_gtf = read_delim(file = inURL_, comment = '#', na = '.', delim = '\t',
 mus_gtf = mus_gtf[grepl(x = mus_gtf$seq, pattern = chrs_ , perl = T),c("seq","feature","start","end","attribute","strand")]     # extracting chromosomes/sequences
 mus_gtf = mus_gtf[order(mus_gtf$seq, mus_gtf$start, mus_gtf$end),]                                                              # sorting gtf by seq, start and end
 
-# STEP 2: Generating gene table ####
+# STEP 3: Generating gene table ####
 message('Generating gene table')
 
 # not possible to filer out non-protein-coding genes here as some pseudo-genes have protein coding transcripts
@@ -35,7 +35,7 @@ genes_ = genes_[inds_]
 genes_tbl = genes_tbl[inds_,c('seq','start','end')]
 rownames(genes_tbl) = genes_
 
-# STEP 3: Generating exon table ####
+# STEP 4: Generating exon table ####
 message('Generating exon table')
 
 exons_tbl = mus_gtf[mus_gtf$feature %in% 'exon',]
@@ -59,6 +59,6 @@ exons_tbl = exons_tbl[!is.na(exons_tbl$gene),]
 exons_tbl = exons_tbl[!duplicated(exons_tbl[,c("start","end")]), ]      # one exon can be part of several transcripts
 genes_tbl = genes_tbl[unique(exons_tbl$gene),]                          # some genes in genes_tbl are not protein coding
 
-# STEP 4: Saving data ####
+# STEP 5: Saving data ####
 
 save(genes_tbl, exons_tbl, file = '../data/genes_exons_tables.RData')
