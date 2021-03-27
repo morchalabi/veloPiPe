@@ -36,7 +36,7 @@ for(btch_ in btchs_)
                                                                                 spliced_vec = unspliced_vec = ambiguous_vec = integer(length = nrow(genes_tbl))             # vector containing spliced counts
                                                                                 names(spliced_vec) = names(unspliced_vec) = names(ambiguous_vec) =  rownames(genes_tbl)     # vector containing unspliced counts
                                                                                 
-                                                                                for(seq_ in unique(aligns_$seq))                                    # for each sequence
+                                                                                for(seq_ in unique(aligns_$seq))                                                            # for each sequence
                                                                                 {
                                                                                   genes_tbl_sub = genes_tbl[genes_tbl$seq %in% seq_,]     # table of genes at chr seq_
                                                                                   exons_tbl_sub = exons_tbl[exons_tbl$seq %in% seq_,]     # table of exons at chr seq_
@@ -49,41 +49,41 @@ for(btch_ in btchs_)
                                                                                     align_end_exons = exons_tbl_sub[ exons_tbl_sub$start <= align_$end   & align_$end   <= exons_tbl_sub$end, ]     # finding exons crossing end of alignment
                                                                                     genes_ = union(align_str_exons$gene, align_end_exons$gene)                                                      # genes whose exons are crossed by either end of current alignment
                                                                                     
-                                                                                    # << Case 1 >>: if neither end of current alignment crosses any exon (alignment is either in intronic or intergenic region)
+                                                                                    # << Case 1 >>: if neither end of current alignment crosses any exon (alignment is either in a genic or an intergenic region)
                                                                                     
                                                                                     if(nrow(align_str_exons) == 0 & nrow(align_end_exons) == 0)
                                                                                     {
-                                                                                      gene_ = rownames(genes_tbl_sub[ genes_tbl_sub$start <= align_$start & align_$end <= genes_tbl_sub$end, ])     # gene that contains current alignment
-                                                                                      if(length(gene_) == 1){ ambiguous_vec[gene_] = ambiguous_vec[gene_] + 1 }                                     # alignment is in intronic region of a gene
+                                                                                      usp_genes = rownames(genes_tbl_sub[ genes_tbl_sub$start <= align_$start & align_$end <= genes_tbl_sub$end, ])     # (overlapping) gene(s) that may contain current alignment (all loci're on Watson strand)
+                                                                                      if(length(usp_genes) != 0){ unspliced_vec[usp_genes] = unspliced_vec[usp_genes] + 1 }                             # alignment is in a genic region
                                                                                       next()
                                                                                     }
                                                                                     
-                                                                                    # << Case 2 >>: if both ends of current alignment cross any exon
+                                                                                    # << Case 2 >>: if both ends of current alignment cross exon(s)
                                                                                     
                                                                                     if(nrow(align_str_exons) != 0 & nrow(align_end_exons) != 0)
                                                                                     {
                                                                                       cmn_exons = intersect(x = align_str_exons$exon, y = align_end_exons$exon)     # common exons crossed by both ends of current alignment
                                                                                       if(length(cmn_exons) != 0)                                                    # there is at least one exon crossed by both ends of current alignment (alignment is exclusively assigned to such exons)
                                                                                       {
-                                                                                        unsp_genes = unique(align_str_exons[align_str_exons$exon %in% cmn_exons,"gene"])      # only genes of common exons
-                                                                                        unspliced_vec[unsp_genes] = unspliced_vec[unsp_genes] + 1
+                                                                                        sp_genes = unique(align_str_exons[align_str_exons$exon %in% cmn_exons,"gene"])      # only genes of common exons
+                                                                                        spliced_vec[sp_genes] = spliced_vec[sp_genes] + 1
                                                                                         
                                                                                       }else                                                                         # crossed exons are apart; they are from either one gene or different genes
                                                                                       {
                                                                                         cmn_genes = intersect(x = align_str_exons$gene, y = align_end_exons$gene)
-                                                                                        if(length(cmn_genes) != 0)
+                                                                                        if(length(cmn_genes) != 0)                                                        # two different exons of the same gene (there could be more genes like this)
                                                                                         {
-                                                                                          spliced_vec[cmn_genes] = spliced_vec[cmn_genes] + 1
+                                                                                          ambiguous_vec[cmn_genes] = ambiguous_vec[cmn_genes] + 1
                                                                                           genes_ = genes_[!genes_ %in% cmn_genes]
                                                                                         }
-                                                                                        if(length(genes_) != 0) { ambiguous_vec[genes_] = ambiguous_vec[genes_] + 1 }
+                                                                                        if(length(genes_) != 0) { ambiguous_vec[genes_] = ambiguous_vec[genes_] + 1 }     # different exons of different genes (this line be merged with the if block as both update ambiguous_vec)
                                                                                       }
                                                                                       next()
                                                                                     }
                                                                                     
                                                                                     # << Case 3 >>: only one end of current alignment crosses exon(s)
                                                                                     
-                                                                                    ambiguous_vec[genes_] = ambiguous_vec[genes_] + 1
+                                                                                    unspliced_vec[genes_] = unspliced_vec[genes_] + 1
                                                                                   }
                                                                                 }
                                                                                 
